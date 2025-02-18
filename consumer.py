@@ -2,7 +2,12 @@ import logging
 import time
 from typing import TYPE_CHECKING
 
-from config import get_connection, configure_logging, MQ_ROUTING_KEY, MQ_EXCHANGE
+from config import (
+    configure_logging,
+    MQ_ROUTING_KEY,
+    connection_params,
+)
+from rabbit_p import RabbitBase
 
 log = logging.getLogger(__name__)
 if TYPE_CHECKING:
@@ -39,6 +44,7 @@ def process_message(
 
 def consume_message(channel: "BlockingChannel") -> None:
     channel.basic_qos(prefetch_count=1)
+    channel.queue_declare(queue=MQ_ROUTING_KEY)
     channel.basic_consume(
         queue=MQ_ROUTING_KEY,
         on_message_callback=process_message,
@@ -50,13 +56,10 @@ def consume_message(channel: "BlockingChannel") -> None:
 
 def main():
     configure_logging(level=logging.WARNING)
-    with get_connection() as connection:
-        log.info("Starting publisher %s", connection)
-        with connection.channel() as channel_object:
-            log.info("Starting channel %s", channel_object)
-            consume_message(
-                channel=channel_object,
-            )
+    with RabbitBase(connection_params=connection_params) as rabbit:
+        consume_message(
+            channel=rabbit.channel,
+        )
 
 
 if __name__ == "__main__":

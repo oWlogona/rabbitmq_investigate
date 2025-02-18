@@ -36,7 +36,7 @@ def main():
         with connection.channel() as channel_object:
             log.warning("Starting channel %s", channel_object)
             declare_queue(channel=channel_object)
-            for idx in range(1, 11):
+            for idx in range(1, 44):
                 produce_message(
                     channel=channel_object,
                     idx=idx,
